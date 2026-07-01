@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Rota Comercial</title>
+<meta name="theme-color" content="#1D4F63">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rota">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFEAE0;
+    --paper-2:#E4DDCB;
+    --ink:#21201C;
+    --ink-60: rgba(33,32,28,0.6);
+    --ink-35: rgba(33,32,28,0.35);
+    --route:#1D4F63;
+    --route-dk:#123642;
+    --crate:#E8A324;
+    --crate-dk:#C6870F;
+    --signal:#B8412F;
+    --line:#C9C0AC;
+    --card:#FBF8F1;
+    --radius: 14px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0; height:100%; overscroll-behavior:none;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{ font-family:'Bebas Neue', sans-serif; letter-spacing:0.02em; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  #app{
+    max-width:520px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    padding: calc(18px + var(--safe-top)) 20px 14px;
+    background: var(--route);
+    color: var(--paper);
+    position:sticky; top:0; z-index:20;
+    border-bottom: 4px solid var(--crate);
+  }
+  header .row{ display:flex; align-items:center; justify-content:space-between; }
+  header .brand{ display:flex; align-items:center; gap:10px; }
+  .tag-mark{
+    width:26px; height:26px; background:var(--crate); border-radius:6px;
+    position:relative; flex:none; transform:rotate(-6deg);
+  }
+  .tag-mark::after{
+    content:""; position:absolute; inset:7px 5px; background:
+      repeating-linear-gradient(90deg, var(--route-dk) 0 2px, transparent 2px 5px);
+  }
+  header h1{ font-size:26px; margin:0; line-height:1; }
+  header .sub{ font-size:11px; letter-spacing:0.14em; text-transform:uppercase; opacity:0.75; margin-top:2px;}
+  .header-btn{
+    background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25);
+    color:var(--paper); width:38px; height:38px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none;
+  }
+  .header-actions{ display:flex; align-items:center; gap:8px; }
+
+  main{ flex:1; padding: 16px 16px calc(96px + var(--safe-bottom)); }
+
+  /* ---------- Tab bar ---------- */
+  nav.tabbar{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:0;
+    width:100%; max-width:520px;
+    background:var(--route-dk);
+    display:flex; z-index:30;
+    padding-bottom: var(--safe-bottom);
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  nav.tabbar button{
+    flex:1; background:none; border:none; color:rgba(239,234,224,0.55);
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:10px 4px 8px; font-family:'IBM Plex Sans'; font-size:11px; font-weight:600;
+    letter-spacing:0.03em; cursor:pointer;
+  }
+  nav.tabbar button.active{ color:var(--crate); }
+  nav.tabbar button svg{ width:22px; height:22px; }
+
+  .view{ display:none; animation: fade .18s ease; }
+  .view.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  h2.section-title{
+    display:flex; align-items:center; gap:10px;
+    font-size:13px; text-transform:uppercase; letter-spacing:0.12em; color:var(--ink-60);
+    margin: 4px 0 12px;
+  }
+  h2.section-title::after{ content:""; flex:1; height:1px; background:var(--line); }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border-radius:10px; border:none; cursor:pointer; font-weight:600;
+    font-family:'IBM Plex Sans'; font-size:14px; padding:13px 16px;
+  }
+  .btn-primary{ background:var(--route); color:var(--paper); }
+  .btn-primary:active{ background:var(--route-dk); }
+  .btn-accent{ background:var(--crate); color:var(--ink); }
+  .btn-accent:active{ background:var(--crate-dk); }
+  .btn-ghost{ background:var(--card); color:var(--ink); border:1px solid var(--line); }
+  .btn-block{ width:100%; }
+  .btn:disabled{ opacity:0.4; }
+
+  /* ---------- Empty state ---------- */
+  .empty{
+    text-align:center; padding:48px 20px; color:var(--ink-60);
+  }
+  .empty .tag-mark{ margin:0 auto 14px; transform:rotate(-8deg); width:44px; height:44px; }
+  .empty .tag-mark::after{ inset:12px 9px; }
+  .empty h3{ margin:0 0 6px; font-size:17px; color:var(--ink); }
+  .empty p{ margin:0 0 18px; font-size:14px; }
+
+  /* ---------- Product / stock cards ---------- */
+  .stock-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:12px; display:flex; gap:12px; align-items:center; margin-bottom:10px;
+    transition: background .25s, border-color .25s;
+  }
+  .stock-card.flash{ background:#FBEAC9; border-color:var(--crate); }
+  .thumb{
+    width:56px; height:56px; border-radius:8px; background:var(--paper-2);
+    flex:none; overflow:hidden; display:flex; align-items:center; justify-content:center;
+    color:var(--ink-35); font-size:10px; text-align:center;
+  }
+  .thumb img{ width:100%; height:100%; object-fit:cover; }
+  .stock-info{ flex:1; min-width:0; }
+  .stock-info .name{ font-weight:600; font-size:14px; margin:0 0 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .stock-info .meta{ font-size:11px; color:var(--ink-60); }
+  .stock-info .meta .barcode{ letter-spacing:0.03em; }
+  .counter{ display:flex; align-items:center; gap:6px; }
+  .counter button{
+    width:32px; height:32px; border-radius:8px; border:1px solid var(--line);
+    background:var(--paper); font-size:18px; font-weight:700; cursor:pointer; color:var(--route);
+    display:flex; align-items:center; justify-content:center; line-height:1;
+  }
+  .counter button:active{ background:var(--paper-2); }
+  .counter .qty{
+    min-width:34px; text-align:center; font-family:'Bebas Neue'; font-size:22px;
+  }
+  .qty.low{ color:var(--signal); }
+
+  /* ---------- Product list item (Produtos tab) ---------- */
+  .product-row{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:12px; display:flex; gap:12px; align-items:center; margin-bottom:10px; cursor:pointer;
+  }
+  .product-row .price{ font-family:'Bebas Neue'; font-size:20px; color:var(--route); white-space:nowrap; }
+
+  /* ---------- Form ---------- */
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-60); margin-bottom:6px; }
+  .field input, .field textarea{
+    width:100%; padding:12px 13px; border-radius:10px; border:1px solid var(--line);
+    background:var(--card); font-family:'IBM Plex Sans'; font-size:15px; color:var(--ink);
+  }
+  .field input:focus, .field textarea:focus{ outline:2px solid var(--route); outline-offset:1px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .scan-inline{ display:flex; gap:8px; }
+  .scan-inline input{ flex:1; }
+  .scan-inline button{
+    flex:none; width:46px; border-radius:10px; border:1px solid var(--line);
+    background:var(--route); color:var(--paper); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .photo-picker{
+    border:1.5px dashed var(--line); border-radius:12px; padding:18px; text-align:center;
+    color:var(--ink-60); font-size:13px; cursor:pointer; background:var(--card);
+  }
+  .photo-picker img{ max-width:100%; max-height:160px; border-radius:8px; display:block; margin:0 auto; }
+
+  /* ---------- Portfolio grid ---------- */
+  .portfolio-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .p-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    overflow:hidden; cursor:pointer;
+  }
+  .p-card .p-img{ width:100%; aspect-ratio:1; background:var(--paper-2); display:flex; align-items:center; justify-content:center; color:var(--ink-35); font-size:11px; overflow:hidden;}
+  .p-card .p-img img{ width:100%; height:100%; object-fit:cover; }
+  .p-card .p-body{ padding:10px 10px 12px; }
+  .p-card .p-name{ font-size:13px; font-weight:600; margin:0 0 4px; line-height:1.2; }
+  .price-tag{
+    display:inline-flex; align-items:baseline; gap:2px; background:var(--crate); color:var(--ink);
+    padding:3px 8px; border-radius:6px; font-family:'Bebas Neue'; font-size:16px;
+  }
+  .price-tag .cents{ font-size:11px; }
+
+  /* ---------- Modal / sheet ---------- */
+  .sheet-backdrop{
+    position:fixed; inset:0; background:rgba(20,20,15,0.55); z-index:50; display:none;
+  }
+  .sheet-backdrop.open{ display:block; }
+  .sheet{
+    position:fixed; left:50%; bottom:0; transform:translateX(-50%); z-index:51;
+    width:100%; max-width:520px; background:var(--paper);
+    border-radius:20px 20px 0 0; max-height:88vh; overflow-y:auto;
+    display:none; padding: 18px 20px calc(24px + var(--safe-bottom));
+    border-top:3px solid var(--crate);
+  }
+  .sheet.open{ display:block; animation: rise .22s ease; }
+  @keyframes rise{ from{ transform:translate(-50%, 30px); opacity:0;} to{ transform:translate(-50%,0); opacity:1;} }
+  .sheet-handle{ width:36px; height:4px; background:var(--line); border-radius:4px; margin:0 auto 14px; }
+  .sheet h3{ margin:0 0 16px; font-size:19px; }
+  .sheet-close{ position:absolute; top:16px; right:16px; background:none; border:none; font-size:20px; color:var(--ink-60); cursor:pointer; }
+
+  /* ---------- Client share card ---------- */
+  .share-card-preview{
+    background:var(--card); border-radius:var(--radius); overflow:hidden; border:1px solid var(--line);
+    margin-bottom:16px;
+  }
+  .share-card-preview .img-wrap{ width:100%; aspect-ratio:1; background:var(--paper-2); overflow:hidden; }
+  .share-card-preview .img-wrap img{ width:100%; height:100%; object-fit:cover; }
+  .share-card-preview .info{ padding:14px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .share-card-preview .info .name{ font-weight:600; font-size:15px; }
+
+  /* ---------- Scanner ---------- */
+  #scanner-wrap{ position:relative; border-radius:var(--radius); overflow:hidden; background:#000; aspect-ratio:3/4; }
+  #reader{ width:100%; height:100%; }
+  #reader video{ object-fit:cover !important; width:100% !important; height:100% !important; }
+  .scan-frame{
+    position:absolute; inset:20% 12%; border:2.5px solid var(--crate); border-radius:12px; pointer-events:none;
+    box-shadow: 0 0 0 999px rgba(0,0,0,0.35);
+  }
+  .scan-hint{ text-align:center; color:var(--ink-60); font-size:13px; margin-top:12px; }
+
+  .toast{
+    position:fixed; left:50%; bottom:calc(90px + var(--safe-bottom)); transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); padding:10px 12px 10px 18px; border-radius:30px; font-size:13px;
+    z-index:60; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+    max-width:88%; display:flex; align-items:center; gap:10px; white-space:nowrap;
+  }
+  .toast #toast-msg{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); pointer-events:auto; }
+  .toast-undo{
+    flex:none; background:var(--crate); color:var(--ink); border:none; border-radius:20px;
+    padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer;
+  }
+
+  .fab{
+    position:fixed; right:calc(50% - 260px + 18px); bottom:calc(96px + var(--safe-bottom) + 8px);
+    width:52px; height:52px; border-radius:16px; background:var(--crate); color:var(--ink);
+    border:none; box-shadow:0 6px 14px rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:15;
+  }
+  @media (max-width:520px){ .fab{ right:18px; } }
+
+  .search-bar{ position:relative; margin-bottom:14px; }
+  .search-bar input{ width:100%; padding:12px 14px 12px 40px; border-radius:10px; border:1px solid var(--line); background:var(--card); font-size:14px; }
+  .search-bar svg{ position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--ink-35); }
+
+  .totals-strip{ display:flex; gap:10px; margin-bottom:16px; }
+  .totals-strip .box{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .totals-strip .box .num{ font-family:'Bebas Neue'; font-size:26px; color:var(--route); line-height:1; }
+  .totals-strip .box .lbl{ font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-60); margin-top:3px;}
+
+  /* ---------- Modo cliente: vitrine em tela cheia ---------- */
+  .client-overlay{
+    position:fixed; inset:0; background:var(--paper); z-index:80;
+    display:none; flex-direction:column;
+    padding: calc(16px + var(--safe-top)) 20px calc(20px + var(--safe-bottom));
+  }
+  .client-overlay.open{ display:flex; }
+  .client-close{
+    align-self:flex-end; width:40px; height:40px; border-radius:10px; border:1px solid var(--line);
+    background:var(--card); font-size:22px; color:var(--ink-60); cursor:pointer; margin-bottom:8px;
+  }
+  .client-slide{ flex:1; display:flex; flex-direction:column; min-height:0; }
+  .client-slide-img{
+    flex:1; min-height:0; background:var(--paper-2); border-radius:var(--radius);
+    display:flex; align-items:center; justify-content:center; overflow:hidden; color:var(--ink-35);
+  }
+  .client-slide-img img{ width:100%; height:100%; object-fit:contain; background:var(--card); }
+  .client-slide-info{ text-align:center; padding:20px 8px 8px; }
+  .client-slide-name{ font-size:22px; font-weight:600; margin:0 0 10px; }
+  .price-tag-lg{ font-size:26px; padding:6px 16px; }
+  .price-tag-lg .cents{ font-size:16px; }
+  .client-nav{ display:flex; align-items:center; justify-content:space-between; padding-top:12px; }
+  .client-nav button{
+    width:52px; height:52px; border-radius:14px; border:none; background:var(--route); color:var(--paper);
+    font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .client-nav button:disabled{ opacity:0.3; }
+  .client-count{ font-family:'IBM Plex Mono'; font-size:13px; color:var(--ink-60); }
+
+  /* ---------- Tela de abertura (escolha de modo) ---------- */
+  .launcher{
+    position:fixed; inset:0; z-index:95; background:var(--route);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: calc(24px + var(--safe-top)) 28px calc(24px + var(--safe-bottom));
+    color:var(--paper); text-align:center;
+  }
+  .launcher .tag-mark{ width:52px; height:52px; margin:0 auto 18px; transform:rotate(-8deg); }
+  .launcher .tag-mark::after{ inset:14px 11px; }
+  .launcher h1{ font-family:'Bebas Neue'; font-size:34px; margin:0 0 6px; letter-spacing:0.03em; }
+  .launcher .sub{ font-size:13px; opacity:0.75; margin-bottom:40px; }
+  .launcher-options{ width:100%; max-width:340px; display:flex; flex-direction:column; gap:14px; }
+  .launcher-card{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); border-radius:16px;
+    padding:20px; text-align:left; cursor:pointer; color:var(--paper); display:flex; gap:14px; align-items:center;
+  }
+  .launcher-card:active{ background:rgba(255,255,255,0.15); }
+  .launcher-card .ico{
+    width:44px; height:44px; border-radius:12px; background:var(--crate); color:var(--route-dk);
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .launcher-card .txt strong{ display:block; font-size:16px; margin-bottom:2px; }
+  .launcher-card .txt span{ font-size:12.5px; opacity:0.75; line-height:1.35; display:block; }
+
+  /* ---------- Modal de PIN ---------- */
+  .pin-backdrop{ position:fixed; inset:0; background:rgba(20,20,15,0.6); z-index:98; display:none; }
+  .pin-backdrop.open{ display:block; }
+  .pin-modal{
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:99;
+    width:88%; max-width:320px; background:var(--paper); border-radius:16px; padding:24px 22px;
+    display:none; text-align:center; border-top:3px solid var(--crate);
+  }
+  .pin-modal.open{ display:block; animation: rise .18s ease; }
+  .pin-modal h3{ margin:0 0 6px; font-size:17px; }
+  .pin-modal p{ margin:0 0 16px; font-size:13px; color:var(--ink-60); }
+  .pin-modal input{
+    width:100%; text-align:center; font-family:'Bebas Neue'; font-size:28px; letter-spacing:0.5em;
+    padding:12px 10px 12px 16px; border-radius:10px; border:1px solid var(--line); background:var(--card);
+    margin-bottom:8px;
+  }
+  .pin-error{ color:var(--signal); font-size:12.5px; min-height:16px; margin-bottom:10px; }
+  .pin-modal .pin-actions{ display:flex; gap:10px; }
+  .pin-modal .pin-actions .btn{ flex:1; }
+  @keyframes shake{ 0%,100%{transform:translate(-50%,-50%);} 25%{transform:translate(calc(-50% - 6px),-50%);} 75%{transform:translate(calc(-50% + 6px),-50%);} }
+  .pin-modal.shake{ animation: shake .3s ease; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="row">
+      <div class="brand">
+        <div class="tag-mark"></div>
+        <div>
+          <h1>Rota Comercial</h1>
+          <div class="sub">Controle de mercadorias</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" id="btn-scan-header" title="Escanear código de barras">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M3 7V4a1 1 0 0 1 1-1h3M21 7V4a1 1 0 0 0-1-1h-3M3 17v3a1 1 0 0 0 1 1h3M21 17v3a1 1 0 0 0-1 1h-3M4 12h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <button class="header-btn" id="btn-config-pin" title="Alterar PIN">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.7 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9.1A1.7 1.7 0 0 0 10.14 3H12a2 2 0 1 1 0 4h-.09" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="header-btn" id="btn-lock-header" title="Modo cliente (bloquear)">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" stroke-width="1.8"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===== ESTOQUE ===== -->
+    <section class="view active" id="view-estoque">
+      <div class="totals-strip">
+        <div class="box"><div class="num" id="tot-itens">0</div><div class="lbl">Itens em estoque</div></div>
+        <div class="box"><div class="num" id="tot-baixo">0</div><div class="lbl">Estoque baixo</div></div>
+        <div class="box"><div class="num" id="tot-valor">R$0</div><div class="lbl">Valor total</div></div>
+      </div>
+      <div class="search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" id="estoque-search" placeholder="Buscar produto ou código...">
+      </div>
+      <h2 class="section-title">Seus produtos</h2>
+      <div id="estoque-list"></div>
+      <div class="empty" id="estoque-empty" style="display:none;">
+        <div class="tag-mark"></div>
+        <h3>Nenhum produto ainda</h3>
+        <p>Cadastre seu primeiro produto na aba Produtos para começar a controlar o estoque.</p>
+      </div>
+    </section>
+
+    <!-- ===== PRODUTOS ===== -->
+    <section class="view" id="view-produtos">
+      <div class="search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" id="produtos-search" placeholder="Buscar produto ou código...">
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-novo-produto" style="margin-bottom:16px;">+ Novo produto</button>
+      <h2 class="section-title">Catálogo</h2>
+      <div id="produtos-list"></div>
+      <div class="empty" id="produtos-empty" style="display:none;">
+        <div class="tag-mark"></div>
+        <h3>Catálogo vazio</h3>
+        <p>Toque em "Novo produto" para cadastrar o primeiro item, com foto, preço e código de barras.</p>
+      </div>
+    </section>
+
+    <!-- ===== PORTFÓLIO ===== -->
+    <section class="view" id="view-portfolio">
+      <h2 class="section-title">Mostrar ao cliente</h2>
+      <button class="btn btn-accent btn-block" id="btn-modo-cliente" style="margin-bottom:16px; display:none;">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M9 21h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Modo cliente — mostrar em tela cheia
+      </button>
+      <div class="portfolio-grid" id="portfolio-grid"></div>
+      <div class="empty" id="portfolio-empty" style="display:none;">
+        <div class="tag-mark"></div>
+        <h3>Nada para mostrar ainda</h3>
+        <p>Cadastre produtos com foto e preço para montar seu portfólio de vendas.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-view="estoque">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 9l9-6 9 6-9 6-9-6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M3 9v6l9 6 9-6V9" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      Estoque
+    </button>
+    <button class="tab-btn" data-view="produtos">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M9 4v16" stroke="currentColor" stroke-width="1.8"/></svg>
+      Produtos
+    </button>
+    <button class="tab-btn" data-view="portfolio">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+      Portfólio
+    </button>
+  </nav>
+
+  <button class="fab" id="fab-scan" title="Escanear">
+    <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><path d="M3 7V4a1 1 0 0 1 1-1h3M21 7V4a1 1 0 0 0-1-1h-3M3 17v3a1 1 0 0 0 1 1h3M21 17v3a1 1 0 0 0-1 1h-3M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+
+  <div class="toast" id="toast">
+    <span id="toast-msg"></span>
+    <button id="toast-undo-btn" class="toast-undo" style="display:none;">Desfazer</button>
+  </div>
+
+  <!-- ===== SHEET: novo/editar produto ===== -->
+  <div class="sheet-backdrop" id="backdrop-produto"></div>
+  <div class="sheet" id="sheet-produto">
+    <div class="sheet-handle"></div>
+    <button class="sheet-close" data-close="sheet-produto">&times;</button>
+    <h3 id="sheet-produto-title">Novo produto</h3>
+    <input type="hidden" id="p-id">
+    <div class="field">
+      <label>Foto do produto</label>
+      <div class="photo-picker" id="photo-picker">
+        <span id="photo-picker-label">Toque para escolher uma foto</span>
+        <img id="photo-preview" style="display:none;">
+      </div>
+      <input type="file" id="p-photo-input" accept="image/*" capture="environment" style="display:none;">
+    </div>
+    <div class="field">
+      <label>Nome do produto</label>
+      <input type="text" id="p-nome" placeholder="Ex: Arroz 5kg Tio João">
+    </div>
+    <div class="field">
+      <label>Código de barras</label>
+      <div class="scan-inline">
+        <input type="text" id="p-codigo" placeholder="Escaneie ou digite" class="mono">
+        <button id="btn-scan-in-form" title="Escanear código">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M3 7V4a1 1 0 0 1 1-1h3M21 7V4a1 1 0 0 0-1-1h-3M3 17v3a1 1 0 0 0 1 1h3M21 17v3a1 1 0 0 0-1 1h-3M4 12h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Preço (R$)</label>
+        <input type="number" id="p-preco" placeholder="0,00" step="0.01" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Estoque inicial</label>
+        <input type="number" id="p-estoque" placeholder="0" inputmode="numeric">
+      </div>
+    </div>
+    <div class="field">
+      <label>Estoque mínimo (alerta)</label>
+      <input type="number" id="p-minimo" placeholder="5" inputmode="numeric">
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-salvar-produto">Salvar produto</button>
+    <button class="btn btn-ghost btn-block" id="btn-excluir-produto" style="margin-top:10px; display:none; color:#B8412F;">Excluir produto</button>
+  </div>
+
+  <!-- ===== SHEET: scanner ===== -->
+  <div class="sheet-backdrop" id="backdrop-scanner"></div>
+  <div class="sheet" id="sheet-scanner">
+    <div class="sheet-handle"></div>
+    <button class="sheet-close" data-close="sheet-scanner">&times;</button>
+    <h3>Escanear código de barras</h3>
+    <div id="scanner-wrap">
+      <div id="reader"></div>
+      <div class="scan-frame"></div>
+    </div>
+    <p class="scan-hint">Aponte a câmera para o código de barras do produto</p>
+  </div>
+
+  <!-- ===== SHEET: compartilhar com cliente ===== -->
+  <div class="sheet-backdrop" id="backdrop-share"></div>
+  <div class="sheet" id="sheet-share">
+    <div class="sheet-handle"></div>
+    <button class="sheet-close" data-close="sheet-share">&times;</button>
+    <h3>Enviar ao cliente</h3>
+    <div class="share-card-preview">
+      <div class="img-wrap"><img id="share-img"></div>
+      <div class="info">
+        <span class="name" id="share-name"></span>
+        <span class="price-tag" id="share-price"></span>
+      </div>
+    </div>
+    <button class="btn btn-accent btn-block" id="btn-share-native" style="margin-bottom:10px;">Compartilhar (WhatsApp, etc.)</button>
+    <button class="btn btn-ghost btn-block" id="btn-share-download">Baixar imagem</button>
+  </div>
+
+  <!-- ===== MODO CLIENTE: vitrine em tela cheia ===== -->
+  <div class="client-overlay" id="client-mode-overlay">
+    <button class="client-close" id="client-mode-close" aria-label="Fechar">&times;</button>
+    <div class="client-slide">
+      <div class="client-slide-img" id="client-slide-img"></div>
+      <div class="client-slide-info">
+        <p class="client-slide-name" id="client-slide-name"></p>
+        <span class="price-tag price-tag-lg" id="client-slide-price"></span>
+      </div>
+    </div>
+    <div class="client-nav">
+      <button id="client-prev" aria-label="Anterior">&larr;</button>
+      <span class="client-count" id="client-slide-count"></span>
+      <button id="client-next" aria-label="Próximo">&rarr;</button>
+    </div>
+  </div>
+
+  <!-- ===== SHEET: configuração ===== -->
+  <div class="sheet-backdrop" id="backdrop-config"></div>
+  <div class="sheet" id="sheet-config">
+    <div class="sheet-handle"></div>
+    <button class="sheet-close" data-close="sheet-config">&times;</button>
+    <h3>Configuração</h3>
+    <button class="btn btn-ghost btn-block" id="btn-alterar-pin" style="margin-bottom:10px;">Alterar PIN</button>
+    <button class="btn btn-primary btn-block" id="btn-exportar-backup" style="margin-bottom:10px;">Exportar backup (.json)</button>
+    <button class="btn btn-ghost btn-block" id="btn-importar-backup">Importar backup</button>
+    <input type="file" id="backup-file-input" accept=".json,application/json" style="display:none;">
+    <p style="font-size:12px; color:var(--ink-60); margin:14px 0 0; line-height:1.5;">
+      Dica: depois de exportar, envie o arquivo pra você mesmo no WhatsApp. Se trocar de celular ou o navegador limpar os dados, é só importar de volta.
+    </p>
+  </div>
+
+  <!-- ===== TELA DE ABERTURA: escolher modo ===== -->
+  <div class="launcher" id="launcher-screen">
+    <div class="tag-mark"></div>
+    <h1>Rota Comercial</h1>
+    <p class="sub">Como você quer abrir o app agora?</p>
+    <div class="launcher-options">
+      <button class="launcher-card" id="launcher-btn-portfolio">
+        <span class="ico">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        </span>
+        <span class="txt"><strong>Portfólio</strong><span>Mostrar catálogo ao cliente — tela travada, sem acesso ao estoque</span></span>
+      </button>
+      <button class="launcher-card" id="launcher-btn-controle">
+        <span class="ico">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3 9l9-6 9 6-9 6-9-6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M3 9v6l9 6 9-6V9" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="txt"><strong>Controle</strong><span>Área do vendedor — estoque, produtos e cadastro (pede PIN)</span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: PIN ===== -->
+  <div class="pin-backdrop" id="pin-backdrop"></div>
+  <div class="pin-modal" id="pin-modal">
+    <h3 id="pin-modal-title">Digite o PIN</h3>
+    <p id="pin-modal-sub">Acesso à área do vendedor</p>
+    <input type="password" id="pin-input" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••">
+    <p class="pin-error" id="pin-error"></p>
+    <div class="pin-actions">
+      <button class="btn btn-ghost" id="pin-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="pin-confirm">Confirmar</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="html5-qrcode.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
